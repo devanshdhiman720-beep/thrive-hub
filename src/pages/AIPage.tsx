@@ -79,7 +79,7 @@ export default function AIPage() {
     recommendations.push({
       icon: Heart,
       title: 'Mental wellness check',
-      text: 'You've recorded several low mood entries. Consider meditation, talking to someone, or taking a break.',
+      text: "You've recorded several low mood entries. Consider meditation, talking to someone, or taking a break.",
       color: 'text-health',
     });
   }
