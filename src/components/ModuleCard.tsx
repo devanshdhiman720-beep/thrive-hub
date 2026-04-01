@@ -6,9 +6,9 @@ interface ModuleCardProps extends React.HTMLAttributes<HTMLDivElement> {
   glowClass?: string;
 }
 
-export function ModuleCard({ children, className, glowClass }: ModuleCardProps) {
+export function ModuleCard({ children, className, glowClass, ...props }: ModuleCardProps) {
   return (
-    <div className={cn('glass rounded-xl p-6 transition-all hover:border-border', glowClass, className)}>
+    <div className={cn('glass rounded-xl p-6 transition-all hover:border-border', glowClass, className)} {...props}>
       {children}
     </div>
   );

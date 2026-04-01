@@ -177,7 +177,7 @@ export default function AcademicPage() {
                     {subjects.find((s) => s.id === a.subjectId)?.name} · Due {a.deadline}
                   </p>
                 </div>
-                <Select value={a.status} onValueChange={(v) => updateAssignmentStatus(a.id, v as Assignment['status'])}>
+                <Select value={a.status} onValueChange={(v) => updateAssignmentStatus(a.id, v as 'pending' | 'in-progress' | 'completed')}>
                   <SelectTrigger className="w-[140px]">
                     <SelectValue />
                   </SelectTrigger>
