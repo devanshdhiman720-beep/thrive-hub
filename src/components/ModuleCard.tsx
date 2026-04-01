@@ -1,9 +1,8 @@
 import { cn } from '@/lib/utils';
 import { ReactNode } from 'react';
 
-interface ModuleCardProps {
+interface ModuleCardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
-  className?: string;
   glowClass?: string;
 }
 
