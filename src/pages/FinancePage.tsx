@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Wallet, Plus, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import type { Expense } from '@/store/wellnessStore';
 
 const categories: Expense['category'][] = ['food', 'travel', 'study', 'entertainment', 'health', 'other'];
@@ -15,6 +15,8 @@ const categories: Expense['category'][] = ['food', 'travel', 'study', 'entertain
 const categoryEmoji: Record<Expense['category'], string> = {
   food: '🍔', travel: '✈️', study: '📚', entertainment: '🎮', health: '💊', other: '📦',
 };
+
+const CAT_COLORS = ['hsl(170,100%,42%)', 'hsl(152,70%,48%)', 'hsl(38,92%,55%)', 'hsl(290,80%,60%)', 'hsl(200,80%,50%)', 'hsl(330,70%,55%)'];
 
 export default function FinancePage() {
   const { expenses, addExpense } = useWellnessStore();
@@ -35,33 +37,49 @@ export default function FinancePage() {
   const totalIncome = expenses.filter((e) => e.type === 'income').reduce((s, e) => s + e.amount, 0);
   const totalExpense = expenses.filter((e) => e.type === 'expense').reduce((s, e) => s + e.amount, 0);
 
-  const catBreakdown = categories.map((cat) => ({
-    name: cat,
+  const catBreakdown = categories.map((cat, i) => ({
+    name: cat.charAt(0).toUpperCase() + cat.slice(1),
     amount: expenses.filter((e) => e.type === 'expense' && e.category === cat).reduce((s, e) => s + e.amount, 0),
+    fill: CAT_COLORS[i],
   })).filter((c) => c.amount > 0);
 
   const recentExpenses = [...expenses].reverse().slice(0, 15);
+
+  const tooltipStyle = {
+    background: 'hsl(220,35%,8%)',
+    border: '1px solid hsl(170,60%,20%)',
+    borderRadius: 8,
+    color: 'hsl(180,20%,90%)',
+  };
 
   return (
     <AppLayout>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold">Finance Tracker</h1>
-          <p className="mt-1 text-muted-foreground">Track income, expenses & budget</p>
+          <h1 className="font-display text-3xl font-bold">💰 Finance Tracker</h1>
+          <p className="mt-1 text-muted-foreground">Conscious spending = Disciplined karma</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-finance text-finance-foreground hover:bg-finance/90"><Plus className="mr-1 h-4 w-4" /> Add Entry</Button>
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90"><Plus className="mr-1 h-4 w-4" /> + Add</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Add Transaction</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>Log Transaction</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="flex gap-2">
-                <Button onClick={() => setType('expense')} variant={type === 'expense' ? 'default' : 'outline'} className="flex-1">Expense</Button>
-                <Button onClick={() => setType('income')} variant={type === 'income' ? 'default' : 'outline'} className="flex-1">Income</Button>
+                <Button
+                  onClick={() => setType('income')}
+                  variant={type === 'income' ? 'default' : 'outline'}
+                  className={type === 'income' ? 'flex-1 bg-primary text-primary-foreground' : 'flex-1 border-primary/30 text-primary'}
+                >Income</Button>
+                <Button
+                  onClick={() => setType('expense')}
+                  variant={type === 'expense' ? 'default' : 'outline'}
+                  className={type === 'expense' ? 'flex-1 bg-finance text-finance-foreground' : 'flex-1 border-primary/30'}
+                >Expense</Button>
               </div>
-              <Input type="number" placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} />
-              <Input placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+              <Input type="number" placeholder="Amount ($)" value={amount} onChange={(e) => setAmount(e.target.value)} />
+              <Input placeholder="Note..." value={description} onChange={(e) => setDescription(e.target.value)} />
               {type === 'expense' && (
                 <Select value={category} onValueChange={(v) => setCategory(v as Expense['category'])}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -70,7 +88,7 @@ export default function FinancePage() {
                   </SelectContent>
                 </Select>
               )}
-              <Button onClick={handleAdd} className="w-full bg-finance text-finance-foreground hover:bg-finance/90">Add</Button>
+              <Button onClick={handleAdd} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">+ Add</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -78,53 +96,49 @@ export default function FinancePage() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <ModuleCard glowClass="glow-health">
-          <div className="flex items-center gap-2 text-health">
-            <TrendingUp className="h-5 w-5" />
-            <span className="text-sm font-medium">Income</span>
-          </div>
-          <p className="mt-2 font-display text-2xl font-bold">${totalIncome.toFixed(2)}</p>
-        </ModuleCard>
-        <ModuleCard glowClass="glow-finance">
-          <div className="flex items-center gap-2 text-destructive">
-            <TrendingDown className="h-5 w-5" />
-            <span className="text-sm font-medium">Expenses</span>
-          </div>
-          <p className="mt-2 font-display text-2xl font-bold">${totalExpense.toFixed(2)}</p>
+        <ModuleCard>
+          <p className="section-title mb-2">Total Income</p>
+          <p className="font-display text-3xl font-bold text-primary">${totalIncome.toFixed(0)}</p>
         </ModuleCard>
         <ModuleCard>
-          <div className="flex items-center gap-2 text-finance">
-            <Wallet className="h-5 w-5" />
-            <span className="text-sm font-medium">Balance</span>
-          </div>
-          <p className="mt-2 font-display text-2xl font-bold">${(totalIncome - totalExpense).toFixed(2)}</p>
+          <p className="section-title mb-2">Total Expense</p>
+          <p className="font-display text-3xl font-bold text-finance">${totalExpense.toFixed(0)}</p>
+        </ModuleCard>
+        <ModuleCard>
+          <p className="section-title mb-2">Net Savings</p>
+          <p className={`font-display text-3xl font-bold ${totalIncome - totalExpense >= 0 ? 'text-primary' : 'text-destructive'}`}>
+            ${(totalIncome - totalExpense).toFixed(0)}
+          </p>
         </ModuleCard>
       </div>
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Chart */}
-        <div className="glass rounded-xl p-6">
-          <h2 className="mb-4 font-display text-lg font-semibold">By Category</h2>
+        {/* Pie Chart */}
+        <ModuleCard>
+          <p className="section-title mb-4">Expense Categories</p>
           {catBreakdown.length > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={catBreakdown} layout="vertical">
-                <XAxis type="number" stroke="hsl(215,15%,55%)" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis dataKey="name" type="category" stroke="hsl(215,15%,55%)" fontSize={12} tickLine={false} axisLine={false} width={90} />
-                <Tooltip contentStyle={{ background: 'hsl(225,20%,12%)', border: '1px solid hsl(225,15%,18%)', borderRadius: 8, color: 'hsl(210,20%,92%)' }} />
-                <Bar dataKey="amount" fill="hsl(38,92%,55%)" radius={[0, 6, 6, 0]} />
-              </BarChart>
+              <PieChart>
+                <Pie data={catBreakdown} dataKey="amount" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={50} paddingAngle={4}>
+                  {catBreakdown.map((entry, i) => (
+                    <Cell key={i} fill={entry.fill} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={tooltipStyle} />
+                <Legend wrapperStyle={{ fontSize: 12, color: 'hsl(200,15%,50%)' }} />
+              </PieChart>
             </ResponsiveContainer>
           ) : (
             <div className="flex h-[250px] items-center justify-center text-muted-foreground">No data yet</div>
           )}
-        </div>
+        </ModuleCard>
 
         {/* Recent */}
         <div>
-          <h2 className="mb-4 font-display text-lg font-semibold">Recent Transactions</h2>
-          <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+          <p className="section-title mb-4">Recent Transactions</p>
+          <div className="space-y-2 max-h-[320px] overflow-y-auto pr-2">
             {recentExpenses.map((e) => (
-              <ModuleCard key={e.id} className="flex items-center justify-between py-3">
+              <ModuleCard key={e.id} className="flex items-center justify-between !py-3">
                 <div className="flex items-center gap-3">
                   <span className="text-lg">{e.type === 'income' ? '💰' : categoryEmoji[e.category]}</span>
                   <div>
@@ -134,11 +148,11 @@ export default function FinancePage() {
                 </div>
                 <div className="flex items-center gap-1">
                   {e.type === 'income' ? (
-                    <ArrowUpRight className="h-4 w-4 text-health" />
+                    <ArrowUpRight className="h-4 w-4 text-primary" />
                   ) : (
-                    <ArrowDownRight className="h-4 w-4 text-destructive" />
+                    <ArrowDownRight className="h-4 w-4 text-finance" />
                   )}
-                  <span className={`font-display font-bold ${e.type === 'income' ? 'text-health' : 'text-destructive'}`}>
+                  <span className={`font-display font-bold ${e.type === 'income' ? 'text-primary' : 'text-finance'}`}>
                     ${e.amount.toFixed(2)}
                   </span>
                 </div>

@@ -8,7 +8,7 @@ interface ModuleCardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function ModuleCard({ children, className, glowClass, ...props }: ModuleCardProps) {
   return (
-    <div className={cn('glass rounded-xl p-6 transition-all hover:border-border', glowClass, className)} {...props}>
+    <div className={cn('evo-card', glowClass, className)} {...props}>
       {children}
     </div>
   );
@@ -17,20 +17,20 @@ export function ModuleCard({ children, className, glowClass, ...props }: ModuleC
 interface StatCardProps {
   label: string;
   value: string | number;
-  icon: ReactNode;
+  icon?: ReactNode;
   accentClass?: string;
 }
 
 export function StatCard({ label, value, icon, accentClass }: StatCardProps) {
   return (
-    <ModuleCard className="flex items-center gap-4">
-      <div className={cn('flex h-12 w-12 items-center justify-center rounded-xl', accentClass)}>
-        {icon}
-      </div>
-      <div>
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="font-display text-2xl font-bold">{value}</p>
-      </div>
+    <ModuleCard>
+      <p className="section-title mb-2">{label}</p>
+      <p className="font-display text-3xl font-bold text-foreground">{value}</p>
+      {icon && (
+        <div className={cn('mt-2 flex h-8 w-8 items-center justify-center rounded-lg', accentClass)}>
+          {icon}
+        </div>
+      )}
     </ModuleCard>
   );
 }
