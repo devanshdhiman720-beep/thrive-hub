@@ -1,10 +1,10 @@
 import { AppLayout } from '@/components/AppLayout';
-import { StatCard } from '@/components/ModuleCard';
+import { StatCard, ModuleCard } from '@/components/ModuleCard';
 import { useWellnessStore } from '@/store/wellnessStore';
-import { GraduationCap, Heart, Wallet, Sparkles, Clock, Target, TrendingUp, Flame } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Clock, Target, TrendingUp, Flame, Heart, Wallet } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
-const CHART_COLORS = ['hsl(210,90%,56%)', 'hsl(152,70%,48%)', 'hsl(38,92%,55%)', 'hsl(290,80%,60%)', 'hsl(262,80%,60%)'];
+const CHART_COLORS = ['hsl(170,100%,42%)', 'hsl(152,70%,48%)', 'hsl(38,92%,55%)', 'hsl(290,80%,60%)', 'hsl(200,80%,50%)', 'hsl(330,70%,55%)'];
 
 export default function Dashboard() {
   const { subjects, studySessions, assignments, healthLogs, habits, expenses } = useWellnessStore();
@@ -24,7 +24,6 @@ export default function Dashboard() {
       )
     : 0;
 
-  // Study data for last 7 days
   const last7 = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
@@ -33,114 +32,96 @@ export default function Dashboard() {
     return { day: d.toLocaleDateString('en', { weekday: 'short' }), minutes: mins };
   });
 
-  // Expense categories
   const catData = ['food', 'travel', 'study', 'entertainment', 'health', 'other']
     .map((cat) => ({
-      name: cat,
+      name: cat.charAt(0).toUpperCase() + cat.slice(1),
       value: expenses.filter((e) => e.type === 'expense' && e.category === cat).reduce((sum, e) => sum + e.amount, 0),
     }))
     .filter((c) => c.value > 0);
 
+  const tooltipStyle = {
+    background: 'hsl(220,35%,8%)',
+    border: '1px solid hsl(170,60%,20%)',
+    borderRadius: 8,
+    color: 'hsl(180,20%,90%)',
+  };
+
   return (
     <AppLayout>
       <div className="mb-8">
-        <h1 className="font-display text-3xl font-bold">Dashboard</h1>
-        <p className="mt-1 text-muted-foreground">Your wellness overview at a glance</p>
+        <h1 className="font-display text-3xl font-bold">
+          Namaste, Student <span className="text-2xl">🙏</span>
+        </h1>
+        <p className="mt-1 text-muted-foreground">Your evolution continues · Track · Grow · Transcend</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Study Hours"
-          value={`${(totalStudyMinutes / 60).toFixed(1)}h`}
-          icon={<Clock className="h-6 w-6 text-academic" />}
-          accentClass="bg-academic/10"
-        />
-        <StatCard
-          label="Syllabus Progress"
-          value={`${avgProgress}%`}
-          icon={<GraduationCap className="h-6 w-6 text-academic" />}
-          accentClass="bg-academic/10"
-        />
-        <StatCard
-          label="Active Habits"
-          value={habits.length}
-          icon={<Flame className="h-6 w-6 text-health" />}
-          accentClass="bg-health/10"
-        />
-        <StatCard
-          label="Balance"
-          value={`$${(totalIncome - totalExpenses).toFixed(0)}`}
-          icon={<Wallet className="h-6 w-6 text-finance" />}
-          accentClass="bg-finance/10"
-        />
+        <StatCard label="Study Hours" value={`${(totalStudyMinutes / 60).toFixed(1)}H`} />
+        <StatCard label="Syllabus Progress" value={`${avgProgress}%`} />
+        <StatCard label="Active Habits" value={habits.length} />
+        <StatCard label="Net Balance" value={`$${(totalIncome - totalExpenses).toFixed(0)}`} />
       </div>
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Study chart */}
-        <div className="glass rounded-xl p-6">
-          <h2 className="mb-4 font-display text-lg font-semibold">Study Activity (7 days)</h2>
+        <ModuleCard>
+          <p className="section-title mb-4">📚 Study This Week</p>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={last7}>
-              <XAxis dataKey="day" stroke="hsl(215,15%,55%)" fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis stroke="hsl(215,15%,55%)" fontSize={12} tickLine={false} axisLine={false} />
-              <Tooltip
-                contentStyle={{ background: 'hsl(225,20%,12%)', border: '1px solid hsl(225,15%,18%)', borderRadius: 8, color: 'hsl(210,20%,92%)' }}
-              />
-              <Bar dataKey="minutes" fill="hsl(210,90%,56%)" radius={[6, 6, 0, 0]} />
+              <XAxis dataKey="day" stroke="hsl(200,15%,40%)" fontSize={12} tickLine={false} axisLine={false} />
+              <YAxis stroke="hsl(200,15%,40%)" fontSize={12} tickLine={false} axisLine={false} />
+              <Tooltip contentStyle={tooltipStyle} />
+              <Bar dataKey="minutes" fill="hsl(170,100%,42%)" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </ModuleCard>
 
-        {/* Expense breakdown */}
-        <div className="glass rounded-xl p-6">
-          <h2 className="mb-4 font-display text-lg font-semibold">Expense Breakdown</h2>
+        <ModuleCard>
+          <p className="section-title mb-4">💰 Finance Overview</p>
           {catData.length > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
-                <Pie data={catData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={50} paddingAngle={4}>
+                <Pie data={catData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} innerRadius={45} paddingAngle={4}>
                   {catData.map((_, i) => (
                     <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip
-                  contentStyle={{ background: 'hsl(225,20%,12%)', border: '1px solid hsl(225,15%,18%)', borderRadius: 8, color: 'hsl(210,20%,92%)' }}
-                />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Legend wrapperStyle={{ fontSize: 12, color: 'hsl(200,15%,50%)' }} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
             <div className="flex h-[220px] items-center justify-center text-muted-foreground">No expenses yet</div>
           )}
-        </div>
+        </ModuleCard>
       </div>
 
-      {/* Quick stats row */}
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="glass rounded-xl p-5">
-          <div className="flex items-center gap-2 text-academic">
+        <ModuleCard>
+          <div className="flex items-center gap-2 text-primary">
             <Target className="h-4 w-4" />
-            <span className="text-sm font-medium">Assignments</span>
+            <span className="text-xs uppercase tracking-wider font-medium">Assignments</span>
           </div>
-          <p className="mt-2 font-display text-xl font-bold">
+          <p className="mt-2 font-display text-2xl font-bold">
             {completedAssignments}/{assignments.length}
           </p>
           <p className="text-xs text-muted-foreground">completed</p>
-        </div>
-        <div className="glass rounded-xl p-5">
+        </ModuleCard>
+        <ModuleCard>
           <div className="flex items-center gap-2 text-health">
             <Heart className="h-4 w-4" />
-            <span className="text-sm font-medium">Today's Exercise</span>
+            <span className="text-xs uppercase tracking-wider font-medium">Today's Exercise</span>
           </div>
-          <p className="mt-2 font-display text-xl font-bold">{todayLogs.reduce((s, l) => s + l.duration, 0)} min</p>
+          <p className="mt-2 font-display text-2xl font-bold">{todayLogs.reduce((s, l) => s + l.duration, 0)} min</p>
           <p className="text-xs text-muted-foreground">{todayLogs.length} sessions</p>
-        </div>
-        <div className="glass rounded-xl p-5">
+        </ModuleCard>
+        <ModuleCard>
           <div className="flex items-center gap-2 text-finance">
             <TrendingUp className="h-4 w-4" />
-            <span className="text-sm font-medium">This Month</span>
+            <span className="text-xs uppercase tracking-wider font-medium">This Month</span>
           </div>
-          <p className="mt-2 font-display text-xl font-bold">${totalExpenses.toFixed(0)}</p>
+          <p className="mt-2 font-display text-2xl font-bold">${totalExpenses.toFixed(0)}</p>
           <p className="text-xs text-muted-foreground">spent</p>
-        </div>
+        </ModuleCard>
       </div>
     </AppLayout>
   );
